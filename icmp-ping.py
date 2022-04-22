@@ -4,7 +4,7 @@ import select
 import struct
 
 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
-
+clientSocket.setblocking(0)
 def checksum(string):
     csum = 0
     countTo = (len(string) // 2) * 2
@@ -50,12 +50,15 @@ def getEchoResponse(destinationAddress, sequence):
          #   response = clientSocket.recv(1508)
     timeout = time.time() + 1
     while True:
-        response = clientSocket.recv(1024)
-        timeReceived = time.time()
-        if response is not None:
-            if time.time() >= timeout:
-                return None
-            else:
+        #peek but don't read what's in the socket: response = clientSocket.recv(1024, socket.MSG_PEEK)
+        #print("response = " + str(response))
+        if time.time() > timeout:
+            print("timeout")
+            return None
+        try:
+            response = clientSocket.recv(1024)
+            timeReceived = time.time()
+            if response is not None:
                 print("packet received")
                 #B size = 1 byte = 8 bit
                 #H size = 2 bytes= 16 bit
@@ -67,37 +70,43 @@ def getEchoResponse(destinationAddress, sequence):
                 header = response[start:end]
                 type, code, checkSum, ID, rSequence, timeSent = struct.unpack("!BBHHHd", header)
                 print("type = " + str(type) + " checkSum = " + str(checkSum) + " ID + " + str(ID) + " sequence = " + str(rSequence) + " pay = " + str(timeSent))
-                return timeReceived - timeSent
+                if ((type == 0) and (ID == 1000) and (rSequence == sequence)):
+                    return timeReceived - timeSent
+                else:
+                    return None
+        except:
+            pass
+            
     
 i = 0
+print("Please enter 'ping' followed by an address. Example: ping www.google.com")
 while True:
     message = input()
     command = message.split()[0]
     if command == 'ping':
-        destination = message.split()[1]
-        destinationAddress = socket.gethostbyname(destination)
-        while True:
-            var = getEchoResponse(destinationAddress, i)
-            if var is None:
-                print("var is none")
-            else:
-                print("var = " + str(var))
-            i += 1
-            time.sleep(1)
-
-
-
+        try:
+            destination = message.split()[1]
+            destinationAddress = socket.gethostbyname(destination)
+            while True:
+                var = getEchoResponse(destinationAddress, i)
+                if var is None:
+                    print("var is none")
+                else:
+                    print("var = " + str(var))
+                i += 1
+                time.sleep(1)
+        except:
+            print ("Error: Destination Invalid. Please try again!")
     else:
-        print("Error: Invalid Command. Please try again")
+        print("Error: Invalid Command. Please try again!")
 
 clientSocket.close()
-
 '''
 while True:
     message = input()
     command = message.split()[0]
     if command == 'ping':
-        #try:
+        try:
             destination = message.split()[1]
             destinationAddress = socket.gethostbyname(destination)
             while True:
@@ -111,8 +120,8 @@ while True:
                 time.sleep(1)
             
     
-        #except:
-         #   print ("Error: Destination Invalid. Please try again")
+        except:
+            print ("Error: Destination Invalid. Please try again")
 
     else:
         print("Error: Invalid Command. Please try again")

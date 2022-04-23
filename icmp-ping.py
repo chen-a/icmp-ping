@@ -54,7 +54,6 @@ def getEchoResponse(destinationAddress, sequence):
         #peek but don't read what's in the socket: response = clientSocket.recv(1024, socket.MSG_PEEK)
         #print("response = " + str(response))
         if time.time() > timeout:
-            print("timeout")
             return None
         try:
             response = clientSocket.recv(1024)
@@ -86,11 +85,11 @@ while True:
         try:
             destination = message.split()[1]
             destinationAddress = socket.gethostbyname(destination)
-            print("Pinging " + destination + " (" + str(destinationAddress) + "):")
+            print("\nPinging " + destination + " (" + str(destinationAddress) + "):")
             while True:
                 delay = getEchoResponse(destinationAddress, i)
                 if delay is None:
-                    print("Packet timed out")
+                    print("Packet timed out: Sequence = " + str(i))
                 else:
                     #convert seconds to ms
                     delay *= 1000

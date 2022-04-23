@@ -1,6 +1,5 @@
 import socket
 import time
-import select
 import struct
 
 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
@@ -45,14 +44,8 @@ def sendEchoRequest(destinationAddress, sequence):
 
 def getEchoResponse(destinationAddress, sequence):
     sendEchoRequest(destinationAddress, sequence)
-        #clientSocket.setblocking(0)
-        #readyObject = select.select([clientSocket], [], [], 1)
-        #if readyObject[0]:
-         #   response = clientSocket.recv(1508)
     timeout = time.time() + 1
     while True:
-        #peek but don't read what's in the socket: response = clientSocket.recv(1024, socket.MSG_PEEK)
-        #print("response = " + str(response))
         if time.time() > timeout:
             return None
         try:

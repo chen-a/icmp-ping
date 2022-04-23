@@ -33,14 +33,14 @@ def sendEchoRequest(destinationAddress, sequence):
     #8 bit int is B
     #16 bit int is H 
     #64 bit double is d
+    #! indicates network byte order
     #Pyload includes a timestamp
-    checkSumPacket = struct.pack("!BBHHHd", 8, 0, 0, 1000, sequence, time.time())
+    checkSumPacket = struct.pack("!BBHHHd", 8, 0, 0, 1001, sequence, time.time())
     checksumValue = checksum(checkSumPacket)
-    realPacket = struct.pack("!BBHHHd", 8, 0, checksumValue, 1000, sequence, time.time())
+    realPacket = struct.pack("!BBHHHd", 8, 0, checksumValue, 1001, sequence, time.time())
 
     #sendto(bytes, address) since socket is not connected
     clientSocket.sendto(realPacket, (destinationAddress, 2424))
-    print("packet sent")
 
 def getEchoResponse(destinationAddress, sequence):
     sendEchoRequest(destinationAddress, sequence)
@@ -59,7 +59,6 @@ def getEchoResponse(destinationAddress, sequence):
             response = clientSocket.recv(1024)
             timeReceived = time.time()
             if response is not None:
-                print("packet received")
                 #B size = 1 byte = 8 bit
                 #H size = 2 bytes= 16 bit
                 #d size = 8 bytes = 64 bit
@@ -69,8 +68,7 @@ def getEchoResponse(destinationAddress, sequence):
                 end = 20 + (struct.calcsize("!B") * 2) + (struct.calcsize("H") * 3) + struct.calcsize("!d")
                 header = response[start:end]
                 type, code, checkSum, ID, rSequence, timeSent = struct.unpack("!BBHHHd", header)
-                print("type = " + str(type) + " checkSum = " + str(checkSum) + " ID + " + str(ID) + " sequence = " + str(rSequence) + " pay = " + str(timeSent))
-                if ((type == 0) and (ID == 1000) and (rSequence == sequence)):
+                if ((type == 0) and (ID == 1001) and (rSequence == sequence)):
                     return timeReceived - timeSent
                 else:
                     return None
@@ -87,12 +85,15 @@ while True:
         try:
             destination = message.split()[1]
             destinationAddress = socket.gethostbyname(destination)
+            print("Pinging " + destination + " (" + str(destinationAddress) + "):")
             while True:
-                var = getEchoResponse(destinationAddress, i)
-                if var is None:
-                    print("var is none")
+                delay = getEchoResponse(destinationAddress, i)
+                if delay is None:
+                    print("Packet timed out")
                 else:
-                    print("var = " + str(var))
+                    #convert seconds to ms
+                    delay *= 1000
+                    print("Reply from " + str(destinationAddress) + ": Sequence = " + str(i) + " Delay = " + ("%.2f" % delay) + "ms")
                 i += 1
                 time.sleep(1)
         except:
@@ -101,29 +102,3 @@ while True:
         print("Error: Invalid Command. Please try again!")
 
 clientSocket.close()
-'''
-while True:
-    message = input()
-    command = message.split()[0]
-    if command == 'ping':
-        try:
-            destination = message.split()[1]
-            destinationAddress = socket.gethostbyname(destination)
-            while True:
-                print("here1")
-                var = getEchoResponse(destinationAddress)
-                print("here2")
-                if var is None:
-                    print("var is none")
-                else:
-                    print("var = " + var)
-                time.sleep(1)
-            
-    
-        except:
-            print ("Error: Destination Invalid. Please try again")
-
-    else:
-        print("Error: Invalid Command. Please try again")
-'''
-    

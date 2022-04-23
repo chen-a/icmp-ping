@@ -61,7 +61,7 @@ def getEchoResponse(destinationAddress, sequence):
                 end = 20 + (struct.calcsize("!B") * 2) + (struct.calcsize("H") * 3) + struct.calcsize("!d")
                 header = response[start:end]
                 type, code, checkSum, ID, rSequence, timeSent = struct.unpack("!BBHHHd", header)
-                if ((type == 0) and (ID == 1001) and (rSequence == sequence)):
+                if ((type == 0) and (code == 0) and (ID == 1001) and (rSequence == sequence)):
                     return timeReceived - timeSent
                 else:
                     return None

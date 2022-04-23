@@ -4,6 +4,7 @@ import select
 import struct
 
 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
+#allows socket.recv to continue if nothing is there
 clientSocket.setblocking(0)
 def checksum(string):
     csum = 0
@@ -93,7 +94,7 @@ while True:
                 else:
                     #convert seconds to ms
                     delay *= 1000
-                    print("Reply from " + str(destinationAddress) + ": Sequence = " + str(i) + " Delay = " + ("%.2f" % delay) + "ms")
+                    print("Reply from " + str(destinationAddress) + ": Sequence = " + str(i) + " Delay = " + ("%.0f" % delay) + "ms")
                 i += 1
                 time.sleep(1)
         except:
